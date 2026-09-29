@@ -9,6 +9,14 @@ namespace ExerciseApp.Service
 {
     public class QuoteService
     {
+        private static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> VehicleModels =
+            new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Ford"] = new[] { "Fiesta", "Focus", "Puma", "S Max" },
+                ["Audi"] = new[] { "A3", "A4", "A5" },
+                ["BMW"] = new[] { "X5", "3 Series", "5 Series" }
+            };
+
         private readonly IReadOnlyDictionary<InsuranceType, IQuoteStrategy> _quoteStrategies;
         private readonly IQuoteRepository _quoteRepository;
 
@@ -26,21 +34,13 @@ namespace ExerciseApp.Service
         {
             var quoteDetail = new QuoteDetail();
 
-            quoteDetail.Makes.Add("Ford");
-            quoteDetail.Makes.Add("Audi");
-            quoteDetail.Makes.Add("BMW");
-
-            var modelSpec = new ModelSpec { Make = "Ford" };
-            modelSpec.Models.AddRange(new []{ "Fiesta", "Focus", "Puma", "S Max" });
-            quoteDetail.Models.Add(modelSpec);
-
-            modelSpec = new ModelSpec { Make = "Audi" };
-            modelSpec.Models.AddRange(new[] { "A3", "A4", "A5" });
-            quoteDetail.Models.Add(modelSpec);
-
-            modelSpec = new ModelSpec { Make = "BMW" };
-            modelSpec.Models.AddRange(new[] { "X5", "3 Series", "5 Series" });
-            quoteDetail.Models.Add(modelSpec);
+            foreach (var make in VehicleModels)
+            {
+                quoteDetail.Makes.Add(make.Key);
+                var modelSpec = new ModelSpec { Make = make.Key };
+                modelSpec.Models.AddRange(make.Value);
+                quoteDetail.Models.Add(modelSpec);
+            }
 
             return quoteDetail;
         }
@@ -49,6 +49,17 @@ namespace ExerciseApp.Service
             QuoteRequest request,
             CancellationToken cancellationToken = default)
         {
+            string normalizedMake;
+            string normalizedModel;
+            var vehicleFound = TryResolveVehicle(
+                request.Make,
+                request.Model,
+                out normalizedMake,
+                out normalizedModel);
+            if (!vehicleFound)
+                return QuoteCalculationResult.Failure(
+                    $"A quote is unavailable for make '{request.Make}' and model '{request.Model}'.");
+
             var ageEligibilityError = GetAgeEligibilityError(request.DateOfBirth);
             if (ageEligibilityError != null)
                 return QuoteCalculationResult.Failure(ageEligibilityError);
@@ -61,14 +72,21 @@ namespace ExerciseApp.Service
             if (!strategyFound)
                 return QuoteCalculationResult.Failure("A quote is not available for the selected insurance type.");
 
-            var premium = quoteStrategy.Calculate(request);
+            var normalizedRequest = new QuoteRequest
+            {
+                DateOfBirth = request.DateOfBirth,
+                InsuranceType = request.InsuranceType,
+                Make = normalizedMake,
+                Model = normalizedModel
+            };
+            var premium = quoteStrategy.Calculate(normalizedRequest);
             var savedQuote = new QuoteRecord
             {
                 Id = Guid.NewGuid(),
                 CreatedAtUtc = DateTime.UtcNow,
                 DateOfBirth = request.DateOfBirth.Value.Date,
-                Make = request.Make,
-                Model = request.Model,
+                Make = normalizedMake,
+                Model = normalizedModel,
                 InsuranceType = request.InsuranceType.Value,
                 Premium = premium
             };
@@ -80,6 +98,38 @@ namespace ExerciseApp.Service
         public Task<QuoteRecord> GetQuoteByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
             return _quoteRepository.GetByIdAsync(id, cancellationToken);
+        }
+
+        private static bool TryResolveVehicle(
+            string userEnteredMake,
+            string userEnteredModel,
+            out string normalizedMake,
+            out string normalizedModel)
+        {
+            normalizedMake = null;
+            normalizedModel = null;
+            if (string.IsNullOrWhiteSpace(userEnteredMake) || string.IsNullOrWhiteSpace(userEnteredModel))
+                return false;
+
+            foreach (var supportedMake in VehicleModels)
+            {
+                if (!string.Equals(supportedMake.Key, userEnteredMake.Trim(), StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                foreach (var supportedModel in supportedMake.Value)
+                {
+                    if (!string.Equals(supportedModel, userEnteredModel.Trim(), StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    normalizedMake = supportedMake.Key;
+                    normalizedModel = supportedModel;
+                    return true;
+                }
+
+                return false;
+            }
+
+            return false;
         }
 
         private static string GetAgeEligibilityError(DateTime? dateOfBirth)

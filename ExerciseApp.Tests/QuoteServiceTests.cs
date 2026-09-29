@@ -92,6 +92,39 @@ namespace ExerciseApp.Tests
             Assert.Equal("A quote is not available for the selected insurance type.", result.ErrorMessage);
         }
 
+        [Theory]
+        [InlineData("Porsche", "911")]
+        [InlineData("BMW", "M3")]
+        [InlineData("Ford", "X5")]
+        public async Task WhenMakeAndModelAreNotSupported_ReturnsReasonAndDoesNotSave(string make, string model)
+        {
+            var (service, repository) = CreateQuoteService();
+            var request = CreateRequest(DateTime.Today.AddYears(-30), make, model);
+
+            var result = await service.PerformQuoteAsync(request);
+
+            Assert.False(result.IsSuccess);
+            Assert.Null(result.Quote);
+            Assert.Null(result.QuoteId);
+            Assert.Equal($"A quote is unavailable for make '{make}' and model '{model}'.", result.ErrorMessage);
+            Assert.Empty(repository.Quotes);
+        }
+
+        [Fact]
+        public async Task WhenMakeAndModelDifferOnlyByCase_UsesCanonicalVehicleForPricing()
+        {
+            var (service, repository) = CreateQuoteService();
+            var request = CreateRequest(DateTime.Today.AddYears(-30), "bmw", "x5");
+
+            var result = await service.PerformQuoteAsync(request);
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal(500m, result.Quote.Value);
+            var savedQuote = Assert.Single(repository.Quotes);
+            Assert.Equal("BMW", savedQuote.Make);
+            Assert.Equal("X5", savedQuote.Model);
+        }
+
         private static (QuoteService Service, FakeQuoteRepository Repository) CreateQuoteService()
         {
             var repository = new FakeQuoteRepository();
@@ -105,14 +138,14 @@ namespace ExerciseApp.Tests
             return (service, repository);
         }
 
-        private static QuoteRequest CreateRequest(DateTime? dateOfBirth)
+        private static QuoteRequest CreateRequest(DateTime? dateOfBirth, string make = "Ford", string model = "Focus")
         {
             return new QuoteRequest
             {
                 DateOfBirth = dateOfBirth,
                 InsuranceType = InsuranceType.FullyComprehensive,
-                Make = "Ford",
-                Model = "Focus"
+                Make = make,
+                Model = model
             };
         }
 
