@@ -29,7 +29,7 @@ namespace ExerciseApp.Controllers
         [HttpPost]
         public ActionResult<QuoteResponse> Post(QuoteRequest request)
         {
-            var response = new QuoteResponse { QuoteRequestValid = false };
+            var response = new QuoteResponse { RequestValid = false, QuoteAvailable = false };
             if (!TryValidateModel(request))
             {
                 response.ErrorMessage = string.Join("; ", ModelState.Values
@@ -38,10 +38,11 @@ namespace ExerciseApp.Controllers
                 return response;
             }
 
-            response.QuoteRequestValid = true;
+            response.RequestValid = true;
             try
             {
                 var quoteResult = _quoteService.PerformQuote(request);
+                response.QuoteAvailable = quoteResult.IsSuccess;
                 response.Quote = quoteResult.Quote;
                 response.ErrorMessage = quoteResult.ErrorMessage;
                 return response;
