@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#174c3c">
+  <meta name="description" content="Get a quick car insurance quote with comparethesquirell.com.">
+  <title>comparethesquirell.com | Car insurance quotes</title>
+  <link rel="stylesheet" href="/css/site.css">
+  <script src="/js/site.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="comparethesquirell.com home">
+      <span class="brand-mark" aria-hidden="true">🐿️</span>
+      <span>comparethe<span class="brand-accent">squirell</span>.com</span>
+    </a>
+    <span class="header-note">A little nutty about good cover</span>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="page-title">
+      <div class="hero-copy">
+        <p class="eyebrow">YOUR CAR. YOUR COVER. YOUR QUOTE.</p>
+        <h1 id="page-title">Find cover that’s <span>worth squirreling away.</span></h1>
+        <p class="hero-description">Tell us a little about you and your car. We’ll help you find a quote in a few quick steps.</p>
+        <div class="hero-badge"><span aria-hidden="true">🌰</span> Quick, clear, and straight to the point</div>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <span class="leaf leaf-one">✦</span>
+        <span class="leaf leaf-two">✦</span>
+        <span class="squirrel">🐿️</span>
+        <span class="acorn">🌰</span>
+      </div>
+    </section>
+
+    <div class="content-grid">
+      <section class="quote-card" aria-labelledby="quote-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">LET’S GET STARTED</p>
+            <h2 id="quote-title">Get your car quote</h2>
+          </div>
+          <span class="step-pill">4 quick details</span>
+        </div>
+
+        <form id="quote-form">
+          <div class="form-grid">
+            <label class="field">
+              <span>Insurance type</span>
+              <select id="insurance-type" name="insuranceType" required>
+                <option value="">Choose cover</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Date of birth</span>
+              <input id="date-of-birth" name="dateOfBirth" type="date" required>
+              <small>Drivers must be aged 17–80 to receive a quote.</small>
+            </label>
+            <label class="field">
+              <span>Car make</span>
+              <select id="make" name="make" required>
+                <option value="">Choose make</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Car model</span>
+              <select id="model" name="model" required disabled>
+                <option value="">Choose model</option>
+              </select>
+            </label>
+          </div>
+          <button class="submit-button" id="submit-button" type="submit">
+            <span>Get my quote</span><span aria-hidden="true">→</span>
+          </button>
+        </form>
+        <div id="quote-result" class="quote-result" role="status" aria-live="polite" hidden></div>
+      </section>
+
+      <aside class="side-card" aria-label="Quote tips">
+        <div class="side-squirrel" aria-hidden="true">🐿️</div>
+        <p class="eyebrow">A FRIENDLY TIP</p>
+        <h2>Pick your car first.</h2>
+        <p>Choose a make to see the models available for your quote. Your details are used to calculate your eligibility and price.</p>
+        <div class="tip-divider"></div>
+        <p class="side-footnote"><span aria-hidden="true">🍂</span> Good things come to those who compare.</p>
+      </aside>
+    </div>
+
+    <section class="history-card" aria-labelledby="history-title">
+      <div class="section-heading history-heading">
+        <div>
+          <p class="eyebrow">THE LATEST NUTSHELLS</p>
+          <h2 id="history-title">Recent quotes</h2>
+        </div>
+        <label class="history-select">Show
+          <select id="history-count" aria-label="Number of recent quotes to show">
+            <option value="5" selected>5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+          </select>
+        </label>
+      </div>
+      <div id="history-list" class="history-list" aria-live="polite">
+        <p class="empty-history">Loading recent quotes…</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>© <span id="year"></span> comparethesquirell.com</span>
+    <span>Keep calm and carry an acorn.</span>
+  </footer>
+</body>
+</html>

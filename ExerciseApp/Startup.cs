@@ -44,6 +44,8 @@ namespace ExerciseApp
             {
                 app.UseDeveloperExceptionPage();
             }
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
             app.UseCors(builder =>
             {
                 builder.WithOrigins("*");
