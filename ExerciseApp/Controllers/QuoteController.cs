@@ -8,11 +8,11 @@ namespace ExerciseApp.Controllers
     [Route("[controller]")]
     public class QuoteController : ControllerBase
     {
-        
-        private readonly QuoteService _quoteService = new QuoteService();
-        public QuoteController()
-        {
+        private readonly QuoteService _quoteService;
 
+        public QuoteController(QuoteService quoteService)
+        {
+            _quoteService = quoteService;
         }
 
         [HttpGet]

@@ -9,7 +9,12 @@ namespace ExerciseApp.Tests
         [Fact]
         public void WhenDetailsAreProvided_AQuoteIsProduced()
         {
-            var qs = new QuoteService();
+            var qs = new QuoteService(new IQuoteStrategy[]
+            {
+                new FullyComprehensiveQuoteStrategy(),
+                new ThirdPartyFireAndTheftQuoteStrategy(),
+                new ThirdPartyOnlyQuoteStrategy()
+            });
             var quoteResult = qs.PerformQuote(new Model.QuoteRequest 
                 { DateOfBirth = new DateTime(2000, 05, 01),
                     InsuranceType = Model.InsuranceType.FullyComprehensive, 

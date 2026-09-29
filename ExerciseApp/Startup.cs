@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using ExerciseApp.Service;
 using System.Text.Json.Serialization;
 
 namespace ExerciseApp
@@ -18,6 +19,10 @@ namespace ExerciseApp
                     option.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()); 
                     option.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
                 });
+            services.AddScoped<QuoteService>();
+            services.AddTransient<IQuoteStrategy, FullyComprehensiveQuoteStrategy>();
+            services.AddTransient<IQuoteStrategy, ThirdPartyFireAndTheftQuoteStrategy>();
+            services.AddTransient<IQuoteStrategy, ThirdPartyOnlyQuoteStrategy>();
             services.AddCors();
         }
 

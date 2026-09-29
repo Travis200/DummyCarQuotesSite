@@ -1,9 +1,22 @@
 using ExerciseApp.Model;
+using System;
+using System.Collections.Generic;
 
 namespace ExerciseApp.Service
 {
     public class QuoteService
     {
+        private readonly IReadOnlyDictionary<InsuranceType, IQuoteStrategy> _quoteStrategies;
+
+        public QuoteService(IEnumerable<IQuoteStrategy> quoteStrategies)
+        {
+            var strategiesByType = new Dictionary<InsuranceType, IQuoteStrategy>();
+            foreach (var quoteStrategy in quoteStrategies)
+                strategiesByType.Add(quoteStrategy.Type, quoteStrategy);
+
+            _quoteStrategies = strategiesByType;
+        }
+
         public QuoteDetail GetQuoteDetail()
         {
             var quoteDetail = new QuoteDetail();
@@ -29,42 +42,30 @@ namespace ExerciseApp.Service
 
         public decimal PerformQuote(QuoteRequest request)
         {
-            if (request.InsuranceType == InsuranceType.FullyComprehensive)
-            {
-                if (request.Make == "Ford")
-                    return 200;
-                if (request.Make == "BMW")
-                {
-                    if (request.Model == "X5")
-                        return 500;
-                    else
-                        return 400;
-                }
-                return 300;
-            }
-            if (request.InsuranceType == InsuranceType.ThirdPartyFireAndTheft) {
-                if (request.Make == "Ford")
-                    return 180;
-                if (request.Make == "BMW")
-                {
-                    if (request.Model == "X5")
-                        return 510;
-                    else
-                        return 400;
-                }
-                return 300;
-            }
-            if (request.InsuranceType == InsuranceType.ThirdPartyOnly)
-            {
-                if (request.Make == "Ford")
-                    return 180;
-                if (request.Make == "Audi")
-                {
-                    return 250;
-                }
-                return 300;
-            }
-            return 0;
+            IQuoteStrategy quoteStrategy;
+            var strategyFound = _quoteStrategies.TryGetValue(request.InsuranceType.Value, out quoteStrategy);
+
+            if (!IsEligibleByAge(request) || !request.InsuranceType.HasValue || !strategyFound)
+                return 0;
+
+            return quoteStrategy.Calculate(request);
+        }
+
+        private static bool IsEligibleByAge(QuoteRequest request)
+        {
+            if (!request.DateOfBirth.HasValue)
+                return false;
+
+            var dateOfBirth = request.DateOfBirth.Value.Date;
+            var today = DateTime.Today;
+            if (dateOfBirth > today)
+                return false;
+
+            var age = today.Year - dateOfBirth.Year;
+            if (dateOfBirth > today.AddYears(-age))
+                age--;
+
+            return age >= 17 && age <= 80;
         }
     }
 }
