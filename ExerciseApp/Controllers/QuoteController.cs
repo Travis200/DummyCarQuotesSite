@@ -4,6 +4,7 @@ using ExerciseApp.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,6 +28,18 @@ namespace ExerciseApp.Controllers
         public QuoteDetail Get()
         {
             return _quoteService.GetQuoteDetail();
+        }
+
+        [HttpGet("~/Quotes")]
+        public async Task<ActionResult<IReadOnlyList<QuoteHistoryItem>>> GetPreviousQuotes(
+            [FromQuery] int count = 5,
+            CancellationToken cancellationToken = default)
+        {
+            if (count < 1 || count > 100)
+                return BadRequest(new { errorMessage = "Count must be between 1 and 100." });
+
+            var quotes = await _quoteService.GetPreviousQuotesAsync(count, cancellationToken);
+            return Ok(quotes);
         }
 
         [HttpGet("{id:guid}")]

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ExerciseApp.Data;
@@ -166,6 +167,18 @@ namespace ExerciseApp.Tests
                 QuoteRecord quote;
                 _quotes.TryGetValue(id, out quote);
                 return Task.FromResult(quote);
+            }
+
+            public Task<IReadOnlyList<QuoteRecord>> GetLatestAsync(
+                int count,
+                CancellationToken cancellationToken = default)
+            {
+                IReadOnlyList<QuoteRecord> quotes = _quotes.Values
+                    .OrderByDescending(quote => quote.CreatedAtUtc)
+                    .ThenByDescending(quote => quote.Id)
+                    .Take(count)
+                    .ToList();
+                return Task.FromResult(quotes);
             }
         }
     }

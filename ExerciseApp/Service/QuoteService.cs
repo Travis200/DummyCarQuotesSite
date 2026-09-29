@@ -100,6 +100,29 @@ namespace ExerciseApp.Service
             return _quoteRepository.GetByIdAsync(id, cancellationToken);
         }
 
+        public async Task<IReadOnlyList<QuoteHistoryItem>> GetPreviousQuotesAsync(
+            int count,
+            CancellationToken cancellationToken = default)
+        {
+            var quotes = await _quoteRepository.GetLatestAsync(count, cancellationToken);
+            var history = new List<QuoteHistoryItem>(quotes.Count);
+
+            foreach (var quote in quotes)
+            {
+                history.Add(new QuoteHistoryItem
+                {
+                    QuoteId = quote.Id,
+                    CreatedAtUtc = quote.CreatedAtUtc,
+                    Make = quote.Make,
+                    Model = quote.Model,
+                    InsuranceType = quote.InsuranceType,
+                    Premium = quote.Premium
+                });
+            }
+
+            return history;
+        }
+
         private static bool TryResolveVehicle(
             string userEnteredMake,
             string userEnteredModel,
