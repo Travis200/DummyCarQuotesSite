@@ -1,9 +1,9 @@
-## Dummy Car Quotes Site
+# Dummy Car Quotes Site
 
 I have made this dummy car quote website for the assessment shown below. The main focus of the work was improving the API and unit tests but I also created a web front-end using HTML, JavaScript and CSS to make it feel more complete.
 I have used GitHub Copilot to speed up the development process as it was confirmed to me that AI use is allowed for this assessment, however I have verified all AI generated output and I am able to justify and explain the code.
 
-# Demo Application
+## Demo Application
 This is a demonstration application that can be used for practicing skills or trying out something new. Some ideas are listed below for activities that could be attempted using the application.
 
 - There is a runtime bug that prevents the BMW models from being displayed.  See if you can address this.
