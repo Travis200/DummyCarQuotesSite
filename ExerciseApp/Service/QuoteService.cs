@@ -1,20 +1,25 @@
 using ExerciseApp.Model;
+using ExerciseApp.Data;
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ExerciseApp.Service
 {
     public class QuoteService
     {
         private readonly IReadOnlyDictionary<InsuranceType, IQuoteStrategy> _quoteStrategies;
+        private readonly IQuoteRepository _quoteRepository;
 
-        public QuoteService(IEnumerable<IQuoteStrategy> quoteStrategies)
+        public QuoteService(IEnumerable<IQuoteStrategy> quoteStrategies, IQuoteRepository quoteRepository)
         {
             var strategiesByType = new Dictionary<InsuranceType, IQuoteStrategy>();
             foreach (var quoteStrategy in quoteStrategies)
                 strategiesByType.Add(quoteStrategy.Type, quoteStrategy);
 
             _quoteStrategies = strategiesByType;
+            _quoteRepository = quoteRepository;
         }
 
         public QuoteDetail GetQuoteDetail()
@@ -40,7 +45,9 @@ namespace ExerciseApp.Service
             return quoteDetail;
         }
 
-        public QuoteCalculationResult PerformQuote(QuoteRequest request)
+        public async Task<QuoteCalculationResult> PerformQuoteAsync(
+            QuoteRequest request,
+            CancellationToken cancellationToken = default)
         {
             var ageEligibilityError = GetAgeEligibilityError(request.DateOfBirth);
             if (ageEligibilityError != null)
@@ -54,7 +61,25 @@ namespace ExerciseApp.Service
             if (!strategyFound)
                 return QuoteCalculationResult.Failure("A quote is not available for the selected insurance type.");
 
-            return QuoteCalculationResult.Success(quoteStrategy.Calculate(request));
+            var premium = quoteStrategy.Calculate(request);
+            var savedQuote = new QuoteRecord
+            {
+                Id = Guid.NewGuid(),
+                CreatedAtUtc = DateTime.UtcNow,
+                DateOfBirth = request.DateOfBirth.Value.Date,
+                Make = request.Make,
+                Model = request.Model,
+                InsuranceType = request.InsuranceType.Value,
+                Premium = premium
+            };
+
+            await _quoteRepository.AddAsync(savedQuote, cancellationToken);
+            return QuoteCalculationResult.Success(savedQuote.Id, premium);
+        }
+
+        public Task<QuoteRecord> GetQuoteByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            return _quoteRepository.GetByIdAsync(id, cancellationToken);
         }
 
         private static string GetAgeEligibilityError(DateTime? dateOfBirth)

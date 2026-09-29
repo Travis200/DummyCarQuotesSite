@@ -1,9 +1,12 @@
 ﻿using ExerciseApp.Model;
 using ExerciseApp.Service;
+using ExerciseApp.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ExerciseApp.Controllers
 {
@@ -26,8 +29,18 @@ namespace ExerciseApp.Controllers
             return _quoteService.GetQuoteDetail();
         }
 
+        [HttpGet("{id:guid}")]
+        public async Task<ActionResult<QuoteRecord>> GetById(Guid id, CancellationToken cancellationToken)
+        {
+            var quote = await _quoteService.GetQuoteByIdAsync(id, cancellationToken);
+            if (quote == null)
+                return NotFound();
+
+            return quote;
+        }
+
         [HttpPost]
-        public ActionResult<QuoteResponse> Post(QuoteRequest request)
+        public async Task<ActionResult<QuoteResponse>> Post(QuoteRequest request, CancellationToken cancellationToken)
         {
             var response = new QuoteResponse { RequestValid = false, QuoteAvailable = false };
             if (!TryValidateModel(request))
@@ -41,8 +54,9 @@ namespace ExerciseApp.Controllers
             response.RequestValid = true;
             try
             {
-                var quoteResult = _quoteService.PerformQuote(request);
+                var quoteResult = await _quoteService.PerformQuoteAsync(request, cancellationToken);
                 response.QuoteAvailable = quoteResult.IsSuccess;
+                response.QuoteId = quoteResult.QuoteId;
                 response.Quote = quoteResult.Quote;
                 response.ErrorMessage = quoteResult.ErrorMessage;
                 return response;

@@ -1,0 +1,31 @@
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace ExerciseApp.Data
+{
+    public class SqliteQuoteRepository : IQuoteRepository
+    {
+        private readonly QuoteDbContext _dbContext;
+
+        public SqliteQuoteRepository(QuoteDbContext dbContext)
+        {
+            _dbContext = dbContext;
+        }
+
+        public async Task<QuoteRecord> AddAsync(QuoteRecord quote, CancellationToken cancellationToken = default)
+        {
+            await _dbContext.Quotes.AddAsync(quote, cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return quote;
+        }
+
+        public Task<QuoteRecord> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            return _dbContext.Quotes
+                .AsNoTracking()
+                .SingleOrDefaultAsync(quote => quote.Id == id, cancellationToken);
+        }
+    }
+}
