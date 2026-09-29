@@ -6,3 +6,5 @@ ExerciseApp/bin/
 ExerciseApp/obj/
 .idea
 /ExerciseApp/quotes.db
+/ExerciseApp/quotes.db-shm
+/ExerciseApp/quotes.db-wal
