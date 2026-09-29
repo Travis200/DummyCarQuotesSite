@@ -1,6 +1,9 @@
 ﻿using ExerciseApp.Model;
 using ExerciseApp.Service;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Linq;
 
 namespace ExerciseApp.Controllers
 {
@@ -9,10 +12,12 @@ namespace ExerciseApp.Controllers
     public class QuoteController : ControllerBase
     {
         private readonly QuoteService _quoteService;
+        private readonly ILogger<QuoteController> _logger;
 
-        public QuoteController(QuoteService quoteService)
+        public QuoteController(QuoteService quoteService, ILogger<QuoteController> logger)
         {
             _quoteService = quoteService;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -22,16 +27,31 @@ namespace ExerciseApp.Controllers
         }
 
         [HttpPost]
-        public QuoteResponse Post(QuoteRequest request)
+        public ActionResult<QuoteResponse> Post(QuoteRequest request)
         {
-            var returnObject = new QuoteResponse() { QuoteRequestValid = false };
-            if (TryValidateModel(request))
+            var response = new QuoteResponse { QuoteRequestValid = false };
+            if (!TryValidateModel(request))
             {
-                returnObject.QuoteRequestValid = true;
-                returnObject.Quote = _quoteService.PerformQuote(request);
+                response.ErrorMessage = string.Join("; ", ModelState.Values
+                    .SelectMany(entry => entry.Errors)
+                    .Select(error => error.ErrorMessage));
+                return response;
             }
-            
-            return returnObject;
+
+            response.QuoteRequestValid = true;
+            try
+            {
+                var quoteResult = _quoteService.PerformQuote(request);
+                response.Quote = quoteResult.Quote;
+                response.ErrorMessage = quoteResult.ErrorMessage;
+                return response;
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception, "An unexpected error occurred while calculating a quote.");
+                response.ErrorMessage = "An unexpected error occurred while calculating the quote. Please try again later.";
+                return StatusCode(500, response);
+            }
         }
 
     }

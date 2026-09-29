@@ -40,32 +40,43 @@ namespace ExerciseApp.Service
             return quoteDetail;
         }
 
-        public decimal PerformQuote(QuoteRequest request)
+        public QuoteCalculationResult PerformQuote(QuoteRequest request)
         {
+            var ageEligibilityError = GetAgeEligibilityError(request.DateOfBirth);
+            if (ageEligibilityError != null)
+                return QuoteCalculationResult.Failure(ageEligibilityError);
+
+            if (!request.InsuranceType.HasValue)
+                return QuoteCalculationResult.Failure("An insurance type is required to calculate a quote.");
+
             IQuoteStrategy quoteStrategy;
             var strategyFound = _quoteStrategies.TryGetValue(request.InsuranceType.Value, out quoteStrategy);
+            if (!strategyFound)
+                return QuoteCalculationResult.Failure("A quote is not available for the selected insurance type.");
 
-            if (!IsEligibleByAge(request) || !request.InsuranceType.HasValue || !strategyFound)
-                return 0;
-
-            return quoteStrategy.Calculate(request);
+            return QuoteCalculationResult.Success(quoteStrategy.Calculate(request));
         }
 
-        private static bool IsEligibleByAge(QuoteRequest request)
+        private static string GetAgeEligibilityError(DateTime? dateOfBirth)
         {
-            if (!request.DateOfBirth.HasValue)
-                return false;
+            if (!dateOfBirth.HasValue)
+                return "Date of birth is required to calculate a quote.";
 
-            var dateOfBirth = request.DateOfBirth.Value.Date;
+            var birthDate = dateOfBirth.Value.Date;
             var today = DateTime.Today;
-            if (dateOfBirth > today)
-                return false;
+            if (birthDate > today)
+                return "Date of birth cannot be in the future.";
 
-            var age = today.Year - dateOfBirth.Year;
-            if (dateOfBirth > today.AddYears(-age))
+            var age = today.Year - birthDate.Year;
+            if (birthDate > today.AddYears(-age))
                 age--;
 
-            return age >= 17 && age <= 80;
+            if (age < 17)
+                return "You must be at least 17 years old to receive a quote.";
+            if (age > 80)
+                return "You must be 80 years old or younger to receive a quote.";
+
+            return null;
         }
     }
 }
